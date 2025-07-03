@@ -23,7 +23,12 @@ class TokenController:
             return Token(**token_json)
         else:
             raise Exception("Não foi possivel gerar um token!")
-
+        
+    def refresh_token(self) -> Token:
+        self._token = self._generate_token_()
+        self._last_generation = datetime.now()
+        return self._token
+    
     def get_token(self) -> Token:
         now = datetime.now()
         if (

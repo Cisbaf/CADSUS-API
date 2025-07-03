@@ -26,22 +26,27 @@ class ConsultController:
             "Content-Type": "application/soap+xml; charset=utf-8"
         }
     
-    def handle_consult(self, document: Document):
-        token = self._token_controller.get_token()
-        data = None
-        if document.type_consult == "cpf":
+    def handle_consult(self, document: Document, max_retries: int = 2):
+        for attempt in range(max_retries):
+            token = self._token_controller.get_token()
             data = soap_body_cpf.replace("{{cpf_input}}", document.value)
-        elif document.type_consult == "cns":
-            pass
-        response = post(
-            self._url_consult,
-            data=data,
-            headers=self._get_headers_(token.access_token),
-            pkcs12_filename=self._cert_path,
-            pkcs12_password=self._cert_password
-        )
-        if response.status_code == 401:
-            return self.handle_consult(document)
-        if response.status_code != 200:
-            raise Exception(f"Não foi possível realizar a consulta! STAUTS CODE: {response.status_code}")
-        return extract_patient_info(response.text)
+
+            response = post(
+                self._url_consult,
+                data=data,
+                headers=self._get_headers_(token.access_token),
+                pkcs12_filename=self._cert_path,
+                pkcs12_password=self._cert_password
+            )
+
+            if response.status_code == 200:
+                return extract_patient_info(response.text)
+
+            if response.status_code == 401 and attempt == 0:
+                # Tenta forçar a renovação do token
+                self._token_controller.refresh_token()
+                continue
+
+            raise Exception(f"Erro ao consultar paciente. STATUS CODE: {response.status_code}")
+
+        raise Exception("Não foi possível realizar a consulta após várias tentativas.")
