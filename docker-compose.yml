@@ -12,3 +12,5 @@ services:
       - /etc/cisbaf-setup/.certificate-cisbaf.pfx:/app/.certificate-cisbaf.pfx
     env_file:
       - /etc/cisbaf-setup/envs/.env-cadsus-api
+    mem_limit: 500m
+    cpus: 1.0
