@@ -12,7 +12,6 @@ class Address(BaseModel):
     postal_code: Optional[str]
     country_code: Optional[str]
 
-
 class PatientInfo(BaseModel):
     full_name: str
     birth_date: str
