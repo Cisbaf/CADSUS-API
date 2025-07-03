@@ -29,7 +29,6 @@ COPY --from=builder /app /app
 
 # Copia código da aplicação
 COPY src /app/src/
-COPY .certificate-cisbaf.pfx /app
 
 # Porta usada pela FastAPI
 EXPOSE 8000

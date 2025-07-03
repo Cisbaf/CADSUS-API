@@ -7,8 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${CADSUS_API_PORT}:8000"
-
     volumes:
       - ./logs:/app/logs
+      - /etc/cisbaf-setup/.certificate-cisbaf.pfx:/app/.certificate-cisbaf.pfx
     env_file:
-      - .env
+      - /etc/cisbaf-setup/envs/.env-cadsus-api
