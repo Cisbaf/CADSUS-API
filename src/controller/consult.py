@@ -1,4 +1,5 @@
 from src.utils.xml_cpf import soap_body_cpf
+from src.utils.xml_cns import soap_body_cns
 from requests_pkcs12 import post
 from src.utils.extract_pacient import extract_patient_info
 from src.model.document import Document
@@ -29,8 +30,10 @@ class ConsultController:
     def handle_consult(self, document: Document, max_retries: int = 2):
         for attempt in range(max_retries):
             token = self._token_controller.get_token()
-            data = soap_body_cpf.replace("{{cpf_input}}", document.value)
-
+            if document.type_consult == "cpf":
+                data = soap_body_cpf.replace("{{cpf_input}}", document.value)
+            elif document.type_consult == "cns":
+                data = soap_body_cns.replace("{{cns_input}}", document.value)
             response = post(
                 self._url_consult,
                 data=data,
@@ -38,7 +41,6 @@ class ConsultController:
                 pkcs12_filename=self._cert_path,
                 pkcs12_password=self._cert_password
             )
-
             if response.status_code == 200:
                 return extract_patient_info(response.text)
 
