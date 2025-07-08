@@ -5,10 +5,17 @@ from src.utils.settings import settings
 
 app = FastAPI()
 
+def get_client_ip(request):
+    x_forwarded_for = request.headers.get("x-forwarded-for")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0].strip()
+    else:
+        ip = request.client.host  # ou request.remote_addr no Flask
+    return ip
+
 @app.middleware("http")
 async def restrict_ip_middleware(request: Request, call_next):
-    client_ip = request.client.host
-
+    client_ip = get_client_ip(request)
     # lê o corpo da requisição para log
     body_bytes = await request.body()
     body_str = body_bytes.decode("utf-8")
