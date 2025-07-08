@@ -1,7 +1,7 @@
-# Documentação da API de Consulta ao Cadastro do SUS (CadSUS)
+# 📄 Documentação da API de Consulta ao Cadastro do SUS (CadSUS) – Atualizada
 
 ## Visão Geral
-Esta API permite consultar dados de cidadãos cadastrados no sistema **CadSUS** do Sistema Único de Saúde brasileiro. Através de uma requisição **POST**, é possível obter informações básicas e de contato de pacientes usando **CPF** ou **CNS** (Cartão Nacional de Saúde).
+Esta API permite consultar dados de cidadãos cadastrados no sistema **CadSUS** do Sistema Único de Saúde. Através de uma requisição **POST**, é possível obter informações pessoais, de contato e outros documentos associados ao cidadão, usando **CPF** ou **CNS**.
 
 - **Endpoint Base:** `http://cadsusapi.cisbaf.org.br/`
 - **Método:** `POST`
@@ -9,104 +9,136 @@ Esta API permite consultar dados de cidadãos cadastrados no sistema **CadSUS** 
 
 ---
 
-## Estrutura da Requisição
+## 🔐 Requisição
 
 ### Corpo da Requisição (JSON)
 
 ```json
 {
   "type_consult": "cpf",
-  "value": "123.456.789-09"
+  "value": "23412236721"
 }
 ```
 
-| Campo        | Tipo   | Valores Aceitos | Descrição                              |
-|--------------|--------|------------------|----------------------------------------|
-| type_consult | string | cpf ou cns       | Tipo de documento para consulta        |
-| value        | string | -                | Número do documento (com ou sem formatação) |
-
-### Validações Automáticas:
-
-**CPF:**
-- Será normalizado (removida pontuação)
-- Validado pelo algoritmo oficial de CPF
-- Exemplo válido: `123.456.789-09` → `12345678909`
-
-**CNS:**
-- Será normalizado (apenas dígitos numéricos)
-- Validado pelo algoritmo oficial de CNS
-- Exemplo válido: `123 4567 8901 2345` → `123456789012345`
+| Campo        | Tipo   | Valores Aceitos | Descrição                             |
+|--------------|--------|------------------|---------------------------------------|
+| type_consult | string | `cpf` ou `cns`   | Tipo de documento para consulta       |
+| value        | string | -                | Número do documento (com ou sem máscara) |
 
 ---
 
-## Respostas da API
+## ✅ Resposta – Sucesso (200 OK)
 
-### Sucesso (200 OK)
+### Exemplo
 
 ```json
 {
   "full_name": "ANA JULIA SANTOS DA SILVA",
+  "social_name": null,
   "birth_date": "20230613000000",
   "gender": "F",
   "cpf": "23412236721",
-  "phone": "+55-21-976239245",
+  "cns": "706000343458946",
+  "phone": null,
+  "email": null,
   "address": {
     "street": "CARLOS MAGNO DA SILVA",
     "number": "39",
-    "complement": "",
+    "complement": null,
     "neighborhood": "CERAMICA",
     "city_code": "330350",
-    "state": "",
-    "postal_code": "",
+    "state": null,
+    "postal_code": null,
     "country_code": "010"
   },
   "mother_name": "JULIA COLITRE DOS SANTOS PINTO",
   "father_name": "WEVERTON SOUSA DA SILVA",
   "marital_status": null,
   "race": "03",
-  "other_ids": [
-    "898006330361527",
-    "P",
-    "706000343458946",
-    "D",
-    "23412236721",
-    "30913635369"
-  ]
+  "ethnicity": null,
+  "deceased": false,
+  "deceased_date": null,
+  "birth_place_city_code": "330350",
+  "birth_place_country_code": "010",
+  "rg": null,
+  "ctps": null,
+  "cnh": null,
+  "voter_id": null,
+  "nis": null,
+  "passport": null,
+  "ric": null,
+  "dnv": "30913635369",
+  "local_id": null,
+  "vip": false,
+  "other_ids": ["P", "D"],
+  "additional_info": {}
 }
 ```
 
-### Observações da Resposta
+---
 
-| Campo           | Tipo              | Descrição                                                                 |
-|------------------|-------------------|--------------------------------------------------------------------------|
-| full_name       | string            | Nome completo                                                            |
-| birth_date      | string (ISO ou AAAAMMDDhhmmss) | Data de nascimento                                                       |
-| gender          | string            | Gênero (M/F)                                                             |
-| cpf             | string            | CPF (apenas dígitos)                                                     |
-| phone           | string            | Telefone com código de país (ex: `+55-21-99999-0000`)                    |
-| address         | objeto            | Dados do endereço                                                        |
-| mother_name     | string            | Nome da mãe                                                              |
-| father_name     | string            | Nome do pai                                                              |
-| marital_status  | string/null       | Estado civil (pode ser nulo)                                             |
-| race            | string            | Código da raça (ex: `"03"` = Parda)                                      |
-| other_ids       | string[]          | Outros identificadores (CNS, CPF duplicado, tipo de documento, etc.)     |
+## 📌 Campos da Resposta
 
-### Estrutura do Endereço (`address`)
+### Dados Pessoais
 
-| Campo        | Tipo   | Descrição                         |
-|--------------|--------|-----------------------------------|
-| street       | string | Nome da rua                       |
-| number       | string | Número                            |
-| complement   | string | Complemento                       |
-| neighborhood | string | Bairro                            |
-| city_code    | string | Código IBGE da cidade             |
-| state        | string | UF (pode estar em branco)         |
-| postal_code  | string | CEP (pode estar em branco)        |
-| country_code | string | Código do país (ex: `"010"`)      |
+| Campo                    | Tipo     | Descrição                                        |
+|--------------------------|----------|--------------------------------------------------|
+| full_name               | string   | Nome completo do cidadão                         |
+| social_name             | string/null | Nome social, se informado                        |
+| birth_date              | string   | Data de nascimento no formato `YYYYMMDDhhmmss`   |
+| gender                  | string   | Gênero (`M` ou `F`)                              |
+| cpf                     | string/null | CPF (somente dígitos)                            |
+| cns                     | string/null | Cartão Nacional de Saúde                         |
+| phone                   | string/null | Número de telefone com DDD ou DDI                |
+| email                   | string/null | E-mail                                           |
+| mother_name             | string/null | Nome da mãe                                      |
+| father_name             | string/null | Nome do pai                                      |
+| marital_status          | string/null | Estado civil                                     |
+| race                    | string/null | Código da raça (ex: `"03"` = Parda)              |
+| ethnicity               | string/null | Etnia                                            |
+| deceased                | boolean  | Indica se o paciente está falecido               |
+| deceased_date           | string/null | Data do óbito (`YYYYMMDDhhmmss`)                |
+| birth_place_city_code   | string/null | Código IBGE da cidade de nascimento              |
+| birth_place_country_code| string/null | Código do país de nascimento                     |
+| vip                     | boolean  | Indica se é um paciente VIP                      |
+
+### Endereço (`address`)
+
+| Campo        | Tipo   | Descrição                     |
+|--------------|--------|-------------------------------|
+| street       | string | Logradouro                    |
+| number       | string | Número da residência           |
+| complement   | string | Complemento do endereço        |
+| neighborhood | string | Bairro                         |
+| city_code    | string | Código IBGE da cidade          |
+| state        | string | UF (estado)                    |
+| postal_code  | string | CEP                            |
+| country_code | string | Código do país (ex: `"010"`)   |
+
+### Documentos Alternativos
+
+| Campo     | Tipo       | Descrição                        |
+|-----------|------------|----------------------------------|
+| rg        | string/null| Registro Geral                   |
+| ctps      | string/null| Carteira de Trabalho             |
+| cnh       | string/null| Carteira Nacional de Habilitação|
+| voter_id  | string/null| Título de Eleitor                |
+| nis       | string/null| Número de Identificação Social   |
+| passport  | string/null| Passaporte                       |
+| ric       | string/null| Registro de Identidade Civil     |
+| dnv       | string/null| Declaração de Nascido Vivo       |
+| local_id  | string/null| Identificador local              |
+
+### Outros
+
+| Campo         | Tipo            | Descrição                                        |
+|---------------|-----------------|--------------------------------------------------|
+| other_ids     | array de string | Lista de identificadores complementares (ex: tipo de documento) |
+| additional_info | objeto        | Informações adicionais customizadas (chave-valor) |
 
 ---
 
-## Erros Comuns
+## ❌ Respostas de Erro
 
 ### 422 Unprocessable Entity – Erro de validação
 
@@ -123,36 +155,14 @@ Esta API permite consultar dados de cidadãos cadastrados no sistema **CadSUS** 
 ```
 
 ### 403 Forbidden
-- IP não autorizado para acesso à API
+- IP não autorizado
 
 ### 400 Bad Request
-- Estrutura da requisição inválida ou campos obrigatórios ausentes
+- Erro na estrutura da requisição ou campos inválidos
 
 ---
 
-## Exemplos de Uso
-
-### Requisição com CPF válido
-
-```json
-{
-  "type_consult": "cpf",
-  "value": "23412236721"
-}
-```
-
-### Requisição com CNS válido
-
-```json
-{
-  "type_consult": "cns",
-  "value": "898006330361527"
-}
-```
-
----
-
-## Exemplo em Python (`requests`)
+## 🧪 Exemplo de Código Python
 
 ```python
 import requests
@@ -163,31 +173,24 @@ payload = {
     "value": "23412236721"
 }
 
-try:
-    response = requests.post(url, json=payload)
-    response.raise_for_status()
+response = requests.post(url, json=payload)
+if response.ok:
     data = response.json()
     print("Nome:", data["full_name"])
-    print("CPF:", data["cpf"])
-    print("Nascimento:", data["birth_date"])
+    print("Data de nascimento:", data["birth_date"])
     print("Endereço:", data["address"]["street"], data["address"]["number"])
-except requests.exceptions.HTTPError as err:
-    if response.status_code == 422:
-        print("Erro de validação:", response.json())
-    else:
-        print("Erro HTTP:", err)
+else:
+    print("Erro:", response.status_code, response.json())
 ```
 
 ---
 
-## Observações Importantes
+## ℹ️ Observações Finais
 
-- A API **só aceita requisições de IPs previamente autorizados**
-- Todos os documentos são **validados antes da consulta**
-- Campos marcados como "opcional" podem retornar `null`, string vazia ou não aparecer
-- A data de nascimento pode vir no formato **`YYYYMMDDhhmmss`**, e deve ser convertida para um formato mais legível conforme necessário
-- O campo `race` pode vir como código numérico (`01` a `06`), seguindo padrão do CadSUS
+- A API **só aceita requisições de IPs autorizados**.
+- Todos os documentos são **validados antes da consulta**.
+- Campos podem vir como `null`, string vazia ou estar ausentes.
+- A data pode vir no formato `YYYYMMDDhhmmss`, devendo ser convertida para algo legível (`dd/mm/aaaa`, por exemplo).
+- O campo `race` segue os códigos do CadSUS (`01` a `06`).
 
 ---
-
-> Para solicitar acesso ou suporte técnico, entre em contato com a administração do sistema.
