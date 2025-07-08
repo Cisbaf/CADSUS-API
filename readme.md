@@ -45,63 +45,71 @@ Esta API permite consultar dados de cidadãos cadastrados no sistema **CadSUS** 
 
 ```json
 {
-  "full_name": "Maria da Silva",
-  "birth_date": "1985-03-15",
+  "full_name": "ANA JULIA SANTOS DA SILVA",
+  "birth_date": "20230613000000",
   "gender": "F",
-  "cpf": "12345678909",
-  "phone": "(11) 99999-8888",
+  "cpf": "23412236721",
+  "phone": "+55-21-976239245",
   "address": {
-    "street": "Rua das Flores",
-    "number": "123",
-    "complement": "Apto 101",
-    "neighborhood": "Centro",
-    "city_code": "3550308",
-    "state": "SP",
-    "postal_code": "01000-000",
-    "country_code": "BR"
+    "street": "CARLOS MAGNO DA SILVA",
+    "number": "39",
+    "complement": "",
+    "neighborhood": "CERAMICA",
+    "city_code": "330350",
+    "state": "",
+    "postal_code": "",
+    "country_code": "010"
   },
-  "mother_name": "Ana Maria da Silva",
-  "father_name": "José da Silva",
-  "marital_status": "Casada",
-  "race": "Parda",
-  "other_ids": ["CNS:123456789012345"]
+  "mother_name": "JULIA COLITRE DOS SANTOS PINTO",
+  "father_name": "WEVERTON SOUSA DA SILVA",
+  "marital_status": null,
+  "race": "03",
+  "other_ids": [
+    "898006330361527",
+    "P",
+    "706000343458946",
+    "D",
+    "23412236721",
+    "30913635369"
+  ]
 }
 ```
 
-### Estrutura de Resposta
+### Observações da Resposta
 
-| Campo           | Tipo              | Descrição                                |
-|------------------|-------------------|-------------------------------------------|
-| full_name       | string            | Nome completo                             |
-| birth_date      | string (ISO)      | Data de nascimento (YYYY-MM-DD)           |
-| gender          | string            | Gênero (M/F)                              |
-| cpf             | string            | CPF (apenas dígitos)                      |
-| phone           | string            | Telefone (opcional)                       |
-| address         | Address (objeto)  | Objeto com dados de endereço              |
-| mother_name     | string            | Nome da mãe (opcional)                    |
-| father_name     | string            | Nome do pai (opcional)                    |
-| marital_status  | string            | Estado civil (opcional)                   |
-| race            | string            | Raça/cor (opcional)                       |
-| other_ids       | string[]          | Outros identificadores (opcional)         |
+| Campo           | Tipo              | Descrição                                                                 |
+|------------------|-------------------|--------------------------------------------------------------------------|
+| full_name       | string            | Nome completo                                                            |
+| birth_date      | string (ISO ou AAAAMMDDhhmmss) | Data de nascimento                                                       |
+| gender          | string            | Gênero (M/F)                                                             |
+| cpf             | string            | CPF (apenas dígitos)                                                     |
+| phone           | string            | Telefone com código de país (ex: `+55-21-99999-0000`)                    |
+| address         | objeto            | Dados do endereço                                                        |
+| mother_name     | string            | Nome da mãe                                                              |
+| father_name     | string            | Nome do pai                                                              |
+| marital_status  | string/null       | Estado civil (pode ser nulo)                                             |
+| race            | string            | Código da raça (ex: `"03"` = Parda)                                      |
+| other_ids       | string[]          | Outros identificadores (CNS, CPF duplicado, tipo de documento, etc.)     |
 
-### Estrutura do Endereço (address)
+### Estrutura do Endereço (`address`)
 
-| Campo        | Tipo   | Descrição                   |
-|--------------|--------|-----------------------------|
-| street       | string | Nome da rua (opcional)      |
-| number       | string | Número (opcional)           |
-| complement   | string | Complemento (opcional)      |
-| neighborhood | string | Bairro (opcional)           |
-| city_code    | string | Código IBGE da cidade       |
-| state        | string | UF (opcional)               |
-| postal_code  | string | CEP (opcional)              |
-| country_code | string | Código do país (opcional)   |
+| Campo        | Tipo   | Descrição                         |
+|--------------|--------|-----------------------------------|
+| street       | string | Nome da rua                       |
+| number       | string | Número                            |
+| complement   | string | Complemento                       |
+| neighborhood | string | Bairro                            |
+| city_code    | string | Código IBGE da cidade             |
+| state        | string | UF (pode estar em branco)         |
+| postal_code  | string | CEP (pode estar em branco)        |
+| country_code | string | Código do país (ex: `"010"`)      |
 
 ---
 
 ## Erros Comuns
 
 ### 422 Unprocessable Entity – Erro de validação
+
 ```json
 {
   "detail": [
@@ -125,18 +133,20 @@ Esta API permite consultar dados de cidadãos cadastrados no sistema **CadSUS** 
 ## Exemplos de Uso
 
 ### Requisição com CPF válido
+
 ```json
 {
   "type_consult": "cpf",
-  "value": "529.982.247-25"
+  "value": "23412236721"
 }
 ```
 
 ### Requisição com CNS válido
+
 ```json
 {
   "type_consult": "cns",
-  "value": "898 0016 8403 0004"
+  "value": "898006330361527"
 }
 ```
 
@@ -150,7 +160,7 @@ import requests
 url = "http://cadsusapi.cisbaf.org.br/"
 payload = {
     "type_consult": "cpf",
-    "value": "52998224725"
+    "value": "23412236721"
 }
 
 try:
@@ -159,6 +169,7 @@ try:
     data = response.json()
     print("Nome:", data["full_name"])
     print("CPF:", data["cpf"])
+    print("Nascimento:", data["birth_date"])
     print("Endereço:", data["address"]["street"], data["address"]["number"])
 except requests.exceptions.HTTPError as err:
     if response.status_code == 422:
@@ -173,12 +184,9 @@ except requests.exceptions.HTTPError as err:
 
 - A API **só aceita requisições de IPs previamente autorizados**
 - Todos os documentos são **validados antes da consulta**
-- Campos marcados como "opcional" podem retornar `null` ou estar ausentes
-- Formato de datas segue padrão **ISO 8601** (`YYYY-MM-DD`)
-- Em caso de erro de validação, a mensagem indicará o problema específico:
-  - `CPF inválido`
-  - `CNS inválido`
-  - `type_consult` deve ser `'cpf'` ou `'cns'`
+- Campos marcados como "opcional" podem retornar `null`, string vazia ou não aparecer
+- A data de nascimento pode vir no formato **`YYYYMMDDhhmmss`**, e deve ser convertida para um formato mais legível conforme necessário
+- O campo `race` pode vir como código numérico (`01` a `06`), seguindo padrão do CadSUS
 
 ---
 
