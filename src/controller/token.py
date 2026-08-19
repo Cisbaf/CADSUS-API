@@ -9,6 +9,9 @@ from pydantic import ValidationError
 
 class TokenController:
 
+    # Renova um pouco antes do vencimento, para não usar um token que expira em trânsito.
+    _EXPIRY_SKEW_SECONDS = 60
+
     def __init__(self, auth_url: str, cert_path: str, cert_password: str):
         self._auth_url = auth_url
         self._cert_path = cert_path
@@ -70,10 +73,18 @@ class TokenController:
             )
             raise Exception("Resposta do servidor de autenticação não tem o formato esperado de token.")
 
+    def _lifetime_seconds(self) -> float:
+        # O EHR-Auth devolve expires_in em MILISSEGUNDOS: observado 1800000,
+        # com o JWT trazendo exp - iat = 1800s (30 min, como diz o manual).
+        # Tratar o valor como segundos fazia o cache nunca expirar, e a API só
+        # se recuperava pelo retry de 401 do ConsultController — uma requisição
+        # desperdiçada a cada meia hora.
+        return max(self._token.expires_in / 1000 - self._EXPIRY_SKEW_SECONDS, 0)
+
     def _is_expired(self) -> bool:
         if not self._last_generation or not self._token:
             return True
-        return (datetime.now() - self._last_generation).total_seconds() > self._token.expires_in
+        return (datetime.now() - self._last_generation).total_seconds() >= self._lifetime_seconds()
 
     def _refresh(self) -> Token:
         """Renova o token. Só deve ser chamado com o lock já adquirido."""
