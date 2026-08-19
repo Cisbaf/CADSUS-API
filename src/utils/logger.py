@@ -27,3 +27,10 @@ handler = TimedRotatingFileHandler(
 formatter = LocalTimeFormatter("%(asctime)s - %(levelname)s - %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+# ERROR também no stderr, para aparecer em `docker compose logs`.
+# INFO (que carrega o corpo da requisição, com CPF/CNS) fica só no arquivo.
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.ERROR)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)

@@ -29,7 +29,15 @@ async def restrict_ip_middleware(request: Request, call_next):
     if client_ip not in settings.allowed_ips and settings.deploy:
         response = JSONResponse(status_code=403, content={"detail": "IP não autorizado"})
     else:
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception:
+            # Sem este bloco o log de acesso nunca é escrito justamente nas
+            # requisições que falham, que são as mais importantes de auditar.
+            logger.info(f"IP: {client_ip} | Body: {body_str} | Status Code: 500 (exceção não tratada)")
+            # Body fora da mensagem de erro: ERROR também vai para o stderr/docker logs.
+            logger.exception(f"IP: {client_ip} | Falha ao processar a requisição")
+            raise
 
     logger.info(f"IP: {client_ip} | Body: {body_str} | Status Code: {response.status_code}")
 

@@ -4,6 +4,8 @@ from requests_pkcs12 import post
 from src.utils.extract_pacient import extract_patient_info
 from src.model.document import Document
 from src.controller.token import TokenController
+from src.utils.logger import logger
+from src.utils.mask import mask_documents
 from dataclasses import dataclass
 from typing import Dict, Tuple
 from threading import Lock
@@ -57,8 +59,11 @@ class ConsultController:
             )
 
             if response.status_code == 200:
-                patient_info = extract_patient_info(response.text)
-
+                try:
+                    patient_info = extract_patient_info(response.text)
+                except Exception as e:
+                    logger.error(f"CONSULT | Falha ao extrair os dados do XML de resposta: {e}")
+                    raise Exception(f"Ocorreu um erro no processo de extração dos dados!\nErro: {e}")
                 # Armazena no cache
                 with self._lock:
                     self._cache[cache_key] = patient_info
@@ -66,9 +71,16 @@ class ConsultController:
                 return patient_info
 
             if response.status_code == 401 and attempt == 0:
+                logger.info("CONSULT | CadSUS respondeu 401, renovando o token e tentando de novo")
                 self._token_controller.refresh_token()
                 continue
 
+            # Corpo mascarado: um SOAP fault costuma ecoar o CPF/CNS consultado.
+            logger.error(
+                f"CONSULT | {self._url_consult} respondeu {response.status_code} "
+                f"| content-type: {response.headers.get('content-type')} "
+                f"| body: {mask_documents(response.text[:500])}"
+            )
             raise Exception(f"Erro ao consultar paciente. STATUS CODE: {response.status_code}")
 
         raise Exception("Não foi possível realizar a consulta após várias tentativas.")
